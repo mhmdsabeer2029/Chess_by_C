@@ -83,7 +83,7 @@ void board_to_fen(Board *board, char *fen);
 int save_file(char *fen);
 void fen_to_board(Board *board, char *fen);
 int is_square_attacked(Board *board, int row, int col, Color attacker_color);
-int is_it_llegal_move (int from_row , int from_col , int to_row , int to_col , Board *board);
+int is_it_legal_move (int from_row , int from_col , int to_row , int to_col , Board *board);
 int is_insufficient_material(Board *board);
 int is_valid_fen(const char *fen);
 int is_threefold_repetition(Board board[], int current_move);

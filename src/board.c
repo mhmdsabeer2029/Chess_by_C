@@ -1,4 +1,5 @@
 #include "board.h"
+#include <stdlib.h>
 
 // Board initialization
 void init_board(Board *board){
@@ -133,7 +134,7 @@ MoveList pawn_moves(int row, int col, Board *board) {
                 if (row != start_row) break;
             }
             if (move_within_bounds(target_row , target_col)){
-                if (is_it_llegal_move(row , col , target_row , target_col , board)){
+                if (is_it_legal_move(row , col , target_row , target_col , board)){
                     Piece target_piece = board->board_places[target_row][target_col];
                     if ((is_piece_opponent(target_piece , current_color) == 0)||(is_piece_opponent(target_piece , current_color) == 1)){
                         break;
@@ -149,7 +150,7 @@ MoveList pawn_moves(int row, int col, Board *board) {
             int target_row = possible_moves[step][0];
             int target_col = possible_moves[step][1];
             if (move_within_bounds(target_row , target_col)){
-                if (is_it_llegal_move(row , col , target_row , target_col , board)){
+                if (is_it_legal_move(row , col , target_row , target_col , board)){
                     Piece target_piece = board->board_places[target_row][target_col];
                     if (is_piece_opponent(target_piece , current_color) == 1){
                         move_list.moves[move_list.count].row = target_row;
@@ -160,7 +161,7 @@ MoveList pawn_moves(int row, int col, Board *board) {
             }
         }
         if (board->en_passant_row != -1 && board->en_passant_col != -1){
-            if (is_it_llegal_move(row , col , board->en_passant_row , board->en_passant_col , board)){
+            if (is_it_legal_move(row , col , board->en_passant_row , board->en_passant_col , board)){
                 if ((row + direction == board->en_passant_row) && (col - 1 == board->en_passant_col)){
                     move_list.moves[move_list.count].row = board->en_passant_row;
                     move_list.moves[move_list.count].col = board->en_passant_col;
@@ -192,7 +193,7 @@ MoveList knight_moves(int row, int col, Board *board) {
         int target_col = col + knight_offsets[i][1];
         
         if (move_within_bounds(target_row, target_col) && is_piece_opponent(board->board_places[target_row][target_col], color)) {
-            if (is_it_llegal_move(row , col , target_row , target_col , board)){
+            if (is_it_legal_move(row , col , target_row , target_col , board)){
                 move_list.moves[move_list.count++] = (Move){target_row, target_col};
             }
         }
@@ -227,7 +228,7 @@ MoveList rook_moves(int row, int col, Board *board) {
                 break;
             }
 
-            if (is_it_llegal_move(row, col, target_row, target_col, board)) {
+            if (is_it_legal_move(row, col, target_row, target_col, board)) {
                 move_list.moves[move_list.count].row = target_row;
                 move_list.moves[move_list.count].col = target_col;
                 move_list.count++;
@@ -268,7 +269,7 @@ MoveList bishop_moves(int row, int col, Board *board) {
                 break;
             }
 
-            if (is_it_llegal_move(row, col, target_row, target_col, board)) {
+            if (is_it_legal_move(row, col, target_row, target_col, board)) {
                 move_list.moves[move_list.count].row = target_row;
                 move_list.moves[move_list.count].col = target_col;
                 move_list.count++;
@@ -312,7 +313,7 @@ MoveList queen_moves(int row, int col, Board *board) {
                 break;
             }
 
-            if (is_it_llegal_move(row, col, target_row, target_col, board)) {
+            if (is_it_legal_move(row, col, target_row, target_col, board)) {
                 move_list.moves[move_list.count].row = target_row;
                 move_list.moves[move_list.count].col = target_col;
                 move_list.count++;
@@ -341,7 +342,7 @@ MoveList king_moves(int row, int col, Board *board) {
         int target_col = col + directions[i][1];
         
         if (move_within_bounds(target_row, target_col) && is_square_attacked(board, target_row, target_col, (current_color == WHITE) ? BLACK : WHITE) == 0) {
-            if (is_it_llegal_move(row , col , target_row , target_col , board)){
+            if (is_it_legal_move(row , col , target_row , target_col , board)){
                 Piece target_piece = board->board_places[target_row][target_col];
                 if (is_piece_opponent(target_piece, current_color)) {
                     move_list.moves[move_list.count].row = target_row;
@@ -657,31 +658,36 @@ int is_checkmate(Board *board, Color color){
     return 0;
 }
 
-int is_it_llegal_move (int from_row , int from_col , int to_row , int to_col , Board *board){
-    Board *Virtual_board = (Board*)malloc(sizeof(Board));
-    if (Virtual_board == NULL) return 0;
+int is_it_legal_move (int from_row , int from_col , int to_row , int to_col , Board *board){
+    Board virtual_board;
     
-    *Virtual_board = *board;  
+    virtual_board = *board;  
     
     Piece moving_piece = board->board_places[from_row][from_col];
     Color color = moving_piece.color;
     
-    Virtual_board->board_places[from_row][from_col].in_game = 0;
-    Virtual_board->board_places[to_row][to_col] = moving_piece;
-    Virtual_board->board_places[to_row][to_col].row = to_row;
-    Virtual_board->board_places[to_row][to_col].col = to_col;
+    virtual_board.board_places[from_row][from_col].in_game = 0;
+    virtual_board.board_places[to_row][to_col] = moving_piece;
+    virtual_board.board_places[to_row][to_col].row = to_row;
+    virtual_board.board_places[to_row][to_col].col = to_col;
     
-    if (moving_piece.piece_type == KING){
-        Virtual_board->players[color].king_row = to_row;
-        Virtual_board->players[color].king_col = to_col;
+    // Handle en passant capture in simulation
+    if (moving_piece.piece_type == PAWN && 
+        to_row == board->en_passant_row && to_col == board->en_passant_col) {
+        int captured_pawn_row = (color == WHITE) ? to_row + 1 : to_row - 1;
+        virtual_board.board_places[captured_pawn_row][to_col].in_game = 0;
     }
     
-    int is_attacked = is_square_attacked(Virtual_board, 
-                                         Virtual_board->players[color].king_row, 
-                                         Virtual_board->players[color].king_col, 
+    if (moving_piece.piece_type == KING){
+        virtual_board.players[color].king_row = to_row;
+        virtual_board.players[color].king_col = to_col;
+    }
+    
+    int is_attacked = is_square_attacked(&virtual_board, 
+                                         virtual_board.players[color].king_row, 
+                                         virtual_board.players[color].king_col, 
                                          (color == WHITE)? BLACK : WHITE);
     
-    free(Virtual_board);
     if (is_attacked){
         return 0;
     }
