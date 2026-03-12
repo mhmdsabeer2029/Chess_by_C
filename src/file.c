@@ -3,6 +3,7 @@
 # include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/stat.h>
 // implementing the FEN method for saving and loading
 void piece_encoder(char piece, Board *board, int row, int col) {
     Piece p;
@@ -84,10 +85,11 @@ void piece_encoder(char piece, Board *board, int row, int col) {
 }
 
 int is_valid_fen(const char *fen) {
-    if (fen == NULL || strlen(fen) < 10) return 0;
+    if (fen == NULL || strlen(fen) < 10 || strlen(fen) >= 300) return 0;
 
     char fen_copy[300];
-    strcpy(fen_copy, fen);
+    strncpy(fen_copy, fen, sizeof(fen_copy) - 1);
+    fen_copy[sizeof(fen_copy) - 1] = '\0';
 
     char *parts[6];
     char *token = strtok(fen_copy, " ");
@@ -186,6 +188,9 @@ char piece_decoder(Type type , Color color){
     case KING:
         result = 'k';
         break;
+    default:
+        result = '?';
+        break;
     }
     if (color == BLACK){
         return result ;
@@ -254,6 +259,10 @@ void board_to_fen(Board *board, char *fen) {
 }
 
 int save_file(char *fen){
+    struct stat st = {0};
+    if (stat("Saved_Games", &st) == -1) {
+        mkdir("Saved_Games", 0755);
+    }
     char filepath[100];
     int i = 1;
     sprintf(filepath, "Saved_Games/Game(%d)", i);

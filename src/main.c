@@ -314,7 +314,11 @@ int main(int argc, char* argv[]) {
                 } else if (x >= 90 && x <= 200 && y >= 10 && y <= 50) {
                     // New Game button clicked
                     move_count = 0;
+                    latest_move = 0;
                     times = 0 ;
+                    game_over = 0;
+                    game_end = 1;
+                    there_is_a_promotion = 0;
                     init_board(&board[move_count]);
                     highlighted_squares.count = 0;
                     for (int i = 0; i < 27; i++) {
@@ -432,7 +436,7 @@ int main(int argc, char* argv[]) {
                 game_end = 0;
             }
         } 
-        else if (is_stalemate(&board[move_count], (move_count % 2) ? WHITE : BLACK)) {
+        else if (is_stalemate(&board[move_count], (move_count % 2) ? BLACK : WHITE)) {
             game_over = 1;
             command_index = 3;
             if (game_end) {
@@ -440,7 +444,7 @@ int main(int argc, char* argv[]) {
                 game_end = 0;
             }
         } 
-        else if (board[move_count].halfmove_clock >= 50) {
+        else if (board[move_count].halfmove_clock >= 100) {
             game_over = 1;
             command_index = 6;
             if (game_end) {
