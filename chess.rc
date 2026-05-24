@@ -1,0 +1,47 @@
+/* Win32 resource for Chess Pro.
+ *
+ * Embeds:
+ *   - App icon (IDI_ICON1)
+ *   - Side-by-side manifest (CREATEPROCESS_MANIFEST_RESOURCE_ID = 1)
+ *   - VERSIONINFO block. Windows SmartScreen is much less aggressive
+ *     when a binary advertises a proper version block + manifest, even
+ *     when the binary is unsigned.
+ */
+
+#include <winver.h>
+
+/* App icon */
+IDI_ICON1 ICON "chess.ico"
+
+/* Application manifest. The numeric ID 1 is
+ * CREATEPROCESS_MANIFEST_RESOURCE_ID. */
+1 24 "chess.exe.manifest"
+
+/* File / product version info */
+1 VERSIONINFO
+FILEVERSION    3,0,0,0
+PRODUCTVERSION 3,0,0,0
+FILEOS         VOS_NT_WINDOWS32
+FILETYPE       VFT_APP
+FILESUBTYPE    0
+{
+ BLOCK "StringFileInfo"
+ {
+  BLOCK "040904E4"
+  {
+   VALUE "CompanyName",      "MHMD SBR"
+   VALUE "FileDescription",  "Chess Pro -- chess.com-style desktop chess"
+   VALUE "FileVersion",      "3.0.0.0"
+   VALUE "InternalName",     "ChessPro"
+   VALUE "LegalCopyright",   "Copyright (c) 2024 MHMD SBR. Released under the MIT licence."
+   VALUE "OriginalFilename", "ChessPro.exe"
+   VALUE "ProductName",      "Chess Pro"
+   VALUE "ProductVersion",   "3.0.0.0"
+   VALUE "Comments",         "Includes built-in engine and optional AI Coach (Groq llama-3.1)."
+  }
+ }
+ BLOCK "VarFileInfo"
+ {
+  VALUE "Translation", 0x0409, 0x04E4
+ }
+}
