@@ -4,6 +4,11 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <string.h>
+#include <stdlib.h>
+
+#define MAX_BOARDS 500
+#define MAX_SAVES 64
+#define SAVE_NAME_LEN 128
 
 typedef enum { WHITE, BLACK } Color; // to indicate the piece selected
 typedef enum { PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING } Type; // all possible different items
@@ -87,4 +92,7 @@ int is_it_llegal_move (int from_row , int from_col , int to_row , int to_col , B
 int is_insufficient_material(Board *board);
 int is_valid_fen(const char *fen);
 int is_threefold_repetition(Board board[], int current_move);
+int list_saved_games(char names[][SAVE_NAME_LEN], int max);
+int ensure_saved_games_dir(void);
+int load_saved_game(const char *name, Board *board);
 #endif

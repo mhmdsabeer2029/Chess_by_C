@@ -1,0 +1,21 @@
+# Build outputs
+chess
+chess.exe
+ChessPro
+ChessPro.exe
+*.o
+*.obj
+
+# Cross-compile/output directories
+dist/
+build/
+
+# Saved games (user data)
+Saved_Games/
+
+# OS / IDE noise
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
