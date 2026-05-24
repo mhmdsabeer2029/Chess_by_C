@@ -14,29 +14,29 @@ void init_board(Board *board){
         }
     }
     // Place Black pieces at the top (rows 0 and 1)
-    board->board_places[0][0] = (Piece){0, 1, 0, 0, BLACK, ROOK, 0, 0, 0};
-    board->board_places[0][1] = (Piece){0, 1, 0, 1, BLACK, KNIGHT, 0, 0, 1};
-    board->board_places[0][2] = (Piece){0, 1, 0, 2, BLACK, BISHOP, 0, 0, 2};
-    board->board_places[0][3] = (Piece){0, 1, 0, 3, BLACK, QUEEN, 0, 0, 3};
-    board->board_places[0][4] = (Piece){0, 1, 0, 4, BLACK, KING, 0, 0, 4};
-    board->board_places[0][5] = (Piece){0, 1, 0, 5, BLACK, BISHOP, 0, 0, 5};
-    board->board_places[0][6] = (Piece){0, 1, 0, 6, BLACK, KNIGHT, 0, 0, 6};
-    board->board_places[0][7] = (Piece){0, 1, 0, 7, BLACK, ROOK, 0, 0, 7};
+    board->board_places[0][0] = (Piece){0, 1, 0, 0, BLACK, ROOK,   0, 0, 0,  0, 0};
+    board->board_places[0][1] = (Piece){0, 1, 0, 1, BLACK, KNIGHT, 0, 0, 1,  0, 0};
+    board->board_places[0][2] = (Piece){0, 1, 0, 2, BLACK, BISHOP, 0, 0, 2,  0, 0};
+    board->board_places[0][3] = (Piece){0, 1, 0, 3, BLACK, QUEEN,  0, 0, 3,  0, 0};
+    board->board_places[0][4] = (Piece){0, 1, 0, 4, BLACK, KING,   0, 0, 4,  0, 0};
+    board->board_places[0][5] = (Piece){0, 1, 0, 5, BLACK, BISHOP, 0, 0, 5,  0, 0};
+    board->board_places[0][6] = (Piece){0, 1, 0, 6, BLACK, KNIGHT, 0, 0, 6,  0, 0};
+    board->board_places[0][7] = (Piece){0, 1, 0, 7, BLACK, ROOK,   0, 0, 7,  0, 0};
     for (int col = 0; col < 8; col++) {
-        board->board_places[1][col] = (Piece){0, 1, 1, col, BLACK, PAWN, 0, 0, 8 + col};
+        board->board_places[1][col] = (Piece){0, 1, 1, col, BLACK, PAWN, 0, 0, 8 + col, 0, 0};
     }
 
     // Place White pieces at the bottom (rows 7 and 6)
-    board->board_places[7][0] = (Piece){0, 1, 7, 0, WHITE, ROOK, 0, 0, 16};
-    board->board_places[7][1] = (Piece){0, 1, 7, 1, WHITE, KNIGHT, 0, 0, 17};
-    board->board_places[7][2] = (Piece){0, 1, 7, 2, WHITE, BISHOP, 0, 0, 18};
-    board->board_places[7][3] = (Piece){0, 1, 7, 3, WHITE, QUEEN, 0, 0, 19};
-    board->board_places[7][4] = (Piece){0, 1, 7, 4, WHITE, KING, 0, 0, 20};
-    board->board_places[7][5] = (Piece){0, 1, 7, 5, WHITE, BISHOP, 0, 0, 21};
-    board->board_places[7][6] = (Piece){0, 1, 7, 6, WHITE, KNIGHT, 0, 0, 22};
-    board->board_places[7][7] = (Piece){0, 1, 7, 7, WHITE, ROOK, 0, 0, 23};
+    board->board_places[7][0] = (Piece){0, 1, 7, 0, WHITE, ROOK,   0, 0, 16, 0, 0};
+    board->board_places[7][1] = (Piece){0, 1, 7, 1, WHITE, KNIGHT, 0, 0, 17, 0, 0};
+    board->board_places[7][2] = (Piece){0, 1, 7, 2, WHITE, BISHOP, 0, 0, 18, 0, 0};
+    board->board_places[7][3] = (Piece){0, 1, 7, 3, WHITE, QUEEN,  0, 0, 19, 0, 0};
+    board->board_places[7][4] = (Piece){0, 1, 7, 4, WHITE, KING,   0, 0, 20, 0, 0};
+    board->board_places[7][5] = (Piece){0, 1, 7, 5, WHITE, BISHOP, 0, 0, 21, 0, 0};
+    board->board_places[7][6] = (Piece){0, 1, 7, 6, WHITE, KNIGHT, 0, 0, 22, 0, 0};
+    board->board_places[7][7] = (Piece){0, 1, 7, 7, WHITE, ROOK,   0, 0, 23, 0, 0};
     for (int col = 0; col < 8; col++) {
-        board->board_places[6][col] = (Piece){0, 1, 6, col, WHITE, PAWN, 0, 0, 24 + col};
+        board->board_places[6][col] = (Piece){0, 1, 6, col, WHITE, PAWN, 0, 0, 24 + col, 0, 0};
     }
 
     board->players[WHITE].color = WHITE;
@@ -530,10 +530,23 @@ void move_piece(Board board[], int from_row, int from_col, int to_row, int to_co
     }
 
     if (moving_piece.piece_type == ROOK) {
-        if (from_col == 0) {
-            board[move_count + 1].players[moving_piece.color].can_castle_queenside = 0;
-        } else if (from_col == 7) {
-            board[move_count + 1].players[moving_piece.color].can_castle_kingside = 0;
+        Color mc = moving_piece.color;
+        int home_row = (mc == WHITE) ? 7 : 0;
+        if (from_row == home_row && from_col == 0) {
+            board[move_count + 1].players[mc].can_castle_queenside = 0;
+        } else if (from_row == home_row && from_col == 7) {
+            board[move_count + 1].players[mc].can_castle_kingside = 0;
+        }
+    }
+
+    // If a rook was captured on its home square, the owner loses castling on that side.
+    if (dest_was_occupied && dest_piece.piece_type == ROOK) {
+        Color owner = dest_piece.color;
+        int owner_home_row = (owner == WHITE) ? 7 : 0;
+        if (to_row == owner_home_row && to_col == 0) {
+            board[move_count + 1].players[owner].can_castle_queenside = 0;
+        } else if (to_row == owner_home_row && to_col == 7) {
+            board[move_count + 1].players[owner].can_castle_kingside = 0;
         }
     }
 
@@ -556,7 +569,9 @@ void move_piece(Board board[], int from_row, int from_col, int to_row, int to_co
         }
     }
 
-    Mix_PlayChannel(-1, sound[sound_index], 0);
+    if (sound && sound[sound_index]) {
+        Mix_PlayChannel(-1, sound[sound_index], 0);
+    }
 }
 
 // detect if the square is attacked or not

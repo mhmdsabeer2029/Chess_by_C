@@ -3,6 +3,31 @@
 # include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#ifdef _WIN32
+#include <direct.h>
+#include <windows.h>
+#else
+#include <dirent.h>
+#include <unistd.h>
+#endif
+
+/* Saved_Games directory helper -- ensures the folder exists. */
+int ensure_saved_games_dir(void) {
+#ifdef _WIN32
+    if (_mkdir("Saved_Games") == 0) return 1;
+    /* mkdir returns -1 if it already exists; treat that as success */
+    DWORD attrs = GetFileAttributesA("Saved_Games");
+    return (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY));
+#else
+    struct stat st;
+    if (stat("Saved_Games", &st) == 0) {
+        return (S_ISDIR(st.st_mode));
+    }
+    return (mkdir("Saved_Games", 0755) == 0);
+#endif
+}
 // implementing the FEN method for saving and loading
 void piece_encoder(char piece, Board *board, int row, int col) {
     Piece p;
@@ -165,7 +190,7 @@ int is_file_found(const char *filename) {
 }
 
 char piece_decoder(Type type , Color color){
-    char result ;
+    char result = 'p';
     switch (type)
     {
     case PAWN:
@@ -254,12 +279,13 @@ void board_to_fen(Board *board, char *fen) {
 }
 
 int save_file(char *fen){
-    char filepath[100];
+    char filepath[160];
     int i = 1;
-    sprintf(filepath, "Saved_Games/Game(%d)", i);
+    ensure_saved_games_dir();
+    sprintf(filepath, "Saved_Games/Game(%d).fen", i);
     while (is_file_found(filepath)) {
         i++;
-        sprintf(filepath, "Saved_Games/Game(%d)", i);
+        sprintf(filepath, "Saved_Games/Game(%d).fen", i);
     }
 
     FILE *file = fopen(filepath , "w");
@@ -270,6 +296,67 @@ int save_file(char *fen){
     fprintf(file, "%s", fen);
     fclose(file);
     return 1 ;
+}
+
+/* Enumerate saved games. Fills `names` with up to `max` entries.
+ * Returns the number of entries written. */
+int list_saved_games(char names[][SAVE_NAME_LEN], int max) {
+    ensure_saved_games_dir();
+    int count = 0;
+#ifdef _WIN32
+    WIN32_FIND_DATAA find_data;
+    HANDLE hFind = FindFirstFileA("Saved_Games\\*", &find_data);
+    if (hFind == INVALID_HANDLE_VALUE) return 0;
+    do {
+        if (find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+        if (count >= max) break;
+        snprintf(names[count], SAVE_NAME_LEN, "%s", find_data.cFileName);
+        count++;
+    } while (FindNextFileA(hFind, &find_data));
+    FindClose(hFind);
+#else
+    DIR *dir = opendir("Saved_Games");
+    if (!dir) return 0;
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL && count < max) {
+        if (entry->d_name[0] == '.') continue;
+        size_t n = strlen(entry->d_name);
+        if (n >= SAVE_NAME_LEN) n = SAVE_NAME_LEN - 1;
+        memcpy(names[count], entry->d_name, n);
+        names[count][n] = '\0';
+        count++;
+    }
+    closedir(dir);
+#endif
+    /* Simple lexicographic sort so the order is stable */
+    for (int a = 0; a < count - 1; a++) {
+        for (int b = a + 1; b < count; b++) {
+            if (strcmp(names[a], names[b]) > 0) {
+                char tmp[SAVE_NAME_LEN];
+                snprintf(tmp, SAVE_NAME_LEN, "%s", names[a]);
+                snprintf(names[a], SAVE_NAME_LEN, "%s", names[b]);
+                snprintf(names[b], SAVE_NAME_LEN, "%s", tmp);
+            }
+        }
+    }
+    return count;
+}
+
+/* Load a saved game into `board`. Returns 1 on success, 0 on failure. */
+int load_saved_game(const char *name, Board *board) {
+    if (!name || !board) return 0;
+    char filepath[300];
+    snprintf(filepath, sizeof(filepath), "Saved_Games/%s", name);
+    FILE *fp = fopen(filepath, "r");
+    if (!fp) return 0;
+    char fen[300];
+    if (!fgets(fen, sizeof(fen), fp)) { fclose(fp); return 0; }
+    fclose(fp);
+    fen[strcspn(fen, "\r\n")] = '\0';
+    if (!is_valid_fen(fen)) return 0;
+    init_board(board);
+    fen_to_board(board, fen);
+    return 1;
 }
 
 void fen_to_board(Board *board, char *fen) {
